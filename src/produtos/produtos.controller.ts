@@ -1,5 +1,5 @@
 // produtos/produtos.services.ts
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ProdutosService } from './produtos.service'; // Importa o serviço
 @Controller('produtos')
 export class ProdutosController {
@@ -13,5 +13,10 @@ export class ProdutosController {
   @Get(':id') // Mapeia para GET /produtos/:id
   findOne(@Param('id') id: string): { id: string; nome: string } | undefined {
     return this.produtosService.findOne(id); // Delega a lógica ao serviço
+  }
+  @Get('filtrar')
+  filterByCategory(@Query('categoria') categoria: string) {
+    console.log(`Filtrando por: ${categoria}`);
+    return this.produtosService.findAllByCategory(categoria);
   }
 }
