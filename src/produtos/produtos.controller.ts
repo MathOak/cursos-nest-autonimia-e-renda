@@ -1,6 +1,7 @@
 // produtos/produtos.services.ts
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ProdutosService } from './produtos.service'; // Importa o serviço
+import { CreateProdutoDto } from './dto/create-produto.dto';
 @Controller('produtos')
 export class ProdutosController {
   constructor(private readonly produtosService: ProdutosService) {} // Injeta o serviço
@@ -18,5 +19,14 @@ export class ProdutosController {
   filterByCategory(@Query('categoria') categoria: string) {
     console.log(`Filtrando por: ${categoria}`);
     return this.produtosService.findAllByCategory(categoria);
+  }
+  @Post()
+  create(@Body() createProdutoDto: CreateProdutoDto): {
+    id: string;
+    nome: string;
+    categoria: string;
+    preco: number;
+  } {
+    return this.produtosService.createOne(createProdutoDto);
   }
 }
