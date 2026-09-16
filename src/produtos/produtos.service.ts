@@ -2,6 +2,7 @@
 // produtos/produtos.services.ts
 import { Injectable } from '@nestjs/common';
 import { CreateProdutoDto } from './dto/create-produto.dto';
+import { UpdateProdutoDto } from './dto/update-produto.dto';
 
 @Injectable() // Indica que esta classe é um provedor que pode ser injetado
 export class ProdutosService {
@@ -60,5 +61,43 @@ export class ProdutosService {
     const newProduto = { id: newId, ...createProdutoDTO };
     this.produtos.push(newProduto);
     return newProduto;
+  }
+  updateOne(
+    id: string,
+    produtoDto: UpdateProdutoDto
+  ): { id: string; nome: string; categoria: string; preco: number } {
+    const produtoIndex = this.produtos.findIndex(
+      (produto) => produto.id === id
+    );
+    if (produtoIndex === -1) {
+      return;
+    }
+    this.produtos[produtoIndex] = {
+      ...this.produtos[produtoIndex],
+      ...produtoDto
+    };
+    return this.produtos[produtoIndex];
+  }
+  updateOnePartial(
+    id: string,
+    produtoDtoPartial: Partial<UpdateProdutoDto>
+  ): {
+    id: string;
+    nome: string;
+    categoria: string;
+    preco: number;
+  } {
+    const produtoIndex = this.produtos.findIndex(
+      (produto) => produto.id === id
+    );
+    if (produtoIndex === -1) {
+      return;
+    }
+    this.produtos[produtoIndex] = {
+      ...this.produtos[produtoIndex],
+      ...produtoDtoPartial
+    };
+
+    return this.produtos[produtoIndex];
   }
 }

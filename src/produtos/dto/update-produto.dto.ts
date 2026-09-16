@@ -1,6 +1,6 @@
 import { IsNumber, IsString } from 'class-validator';
 
-export class CreateProdutoDto {
+export class UpdateProdutoDto {
   @IsString({ message: 'O nome do produto precisa ser um texto' })
   nome: string;
 

@@ -1,7 +1,17 @@
 // produtos/produtos.services.ts
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query
+} from '@nestjs/common';
 import { ProdutosService } from './produtos.service'; // Importa o serviço
 import { CreateProdutoDto } from './dto/create-produto.dto';
+import { UpdateProdutoDto } from './dto/update-produto.dto';
 @Controller('produtos')
 export class ProdutosController {
   constructor(private readonly produtosService: ProdutosService) {} // Injeta o serviço
@@ -28,5 +38,16 @@ export class ProdutosController {
     preco: number;
   } {
     return this.produtosService.createOne(createProdutoDto);
+  }
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateProdutoDto) {
+    return this.produtosService.updateOne(id, dto);
+  }
+  @Patch(':id')
+  updatePartial(
+    @Param('id') id: string,
+    @Body() dto: Partial<UpdateProdutoDto>
+  ) {
+    return this.produtosService.updateOnePartial(id, dto);
   }
 }
