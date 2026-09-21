@@ -2,7 +2,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -21,14 +23,14 @@ export class ProdutosController {
     return this.produtosService.findAll(); // Delega a lógica ao serviço
   }
 
-  @Get(':id') // Mapeia para GET /produtos/:id
-  findOne(@Param('id') id: string): { id: string; nome: string } | undefined {
-    return this.produtosService.findOne(id); // Delega a lógica ao serviço
-  }
   @Get('filtrar')
   filterByCategory(@Query('categoria') categoria: string) {
     console.log(`Filtrando por: ${categoria}`);
     return this.produtosService.findAllByCategory(categoria);
+  }
+  @Get(':id') // Mapeia para GET /produtos/:id
+  findOne(@Param('id') id: string): { id: string; nome: string } | undefined {
+    return this.produtosService.findOne(id); // Delega a lógica ao serviço
   }
   @Post()
   create(@Body() createProdutoDto: CreateProdutoDto): {
@@ -49,5 +51,11 @@ export class ProdutosController {
     @Body() dto: Partial<UpdateProdutoDto>
   ) {
     return this.produtosService.updateOnePartial(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id') id: string): void {
+    this.produtosService.remove(id);
   }
 }

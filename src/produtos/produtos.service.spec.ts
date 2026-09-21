@@ -67,4 +67,59 @@ describe('ProdutosService', () => {
     });
     expect(service.findAll()).toHaveLength(5);
   });
+
+  it('deveria substituir todos os campos no PUT', () => {
+    const produtoAtualizado = service.updateOne('1', {
+      nome: 'notebook gamer',
+      preco: 5000,
+      categoria: 'computadores'
+    });
+
+    expect(produtoAtualizado).toEqual({
+      id: '1',
+      nome: 'notebook gamer',
+      preco: 5000,
+      categoria: 'computadores'
+    });
+  });
+
+  it('deveria preservar campos omitidos no PATCH', () => {
+    const produtoAtualizado = service.updateOnePartial('2', { preco: 175 });
+
+    expect(produtoAtualizado).toEqual({
+      id: '2',
+      nome: 'mouse',
+      preco: 175,
+      categoria: 'eletronicos'
+    });
+  });
+
+  it('deveria remover um produto e manter o próximo ID disponível', () => {
+    service.remove('2');
+
+    expect(service.findOne('2')).toBeUndefined();
+    expect(
+      service.createOne({
+        nome: 'webcam',
+        preco: 300,
+        categoria: 'eletronicos'
+      })
+    ).toEqual({
+      id: '5',
+      nome: 'webcam',
+      preco: 300,
+      categoria: 'eletronicos'
+    });
+  });
+
+  it('deveria rejeitar atualização e remoção de produto inexistente', () => {
+    expect(() =>
+      service.updateOne('999', {
+        nome: 'inexistente',
+        preco: 1,
+        categoria: 'teste'
+      })
+    ).toThrow('Produto 999 não encontrado');
+    expect(() => service.remove('999')).toThrow('Produto 999 não encontrado');
+  });
 });

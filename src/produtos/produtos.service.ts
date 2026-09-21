@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 // produtos/produtos.services.ts
 import { Injectable } from '@nestjs/common';
 import { CreateProdutoDto } from './dto/create-produto.dto';
@@ -57,7 +56,9 @@ export class ProdutosService {
     categoria: string;
     preco: number;
   } {
-    const newId = (this.produtos.length + 1).toString();
+    const newId = (
+      Math.max(...this.produtos.map((produto) => Number(produto.id)), 0) + 1
+    ).toString();
     const newProduto = { id: newId, ...createProdutoDTO };
     this.produtos.push(newProduto);
     return newProduto;
@@ -73,7 +74,7 @@ export class ProdutosService {
       return;
     }
     this.produtos[produtoIndex] = {
-      ...this.produtos[produtoIndex],
+      id,
       ...produtoDto
     };
     return this.produtos[produtoIndex];
@@ -99,5 +100,16 @@ export class ProdutosService {
     };
 
     return this.produtos[produtoIndex];
+  }
+
+  remove(id: string): void {
+    const produtoIndex = this.produtos.findIndex(
+      (produto) => produto.id === id
+    );
+    if (produtoIndex === -1) {
+      return;
+    }
+
+    this.produtos.splice(produtoIndex, 1);
   }
 }
