@@ -15,5 +15,5 @@ export class UpdateProdutoDto {
 
   @IsOptional()
   @IsString({ message: 'A imagem do produto precisa ser um texto' })
-  imagem?: string;
+  imagem?: string | null;
 }

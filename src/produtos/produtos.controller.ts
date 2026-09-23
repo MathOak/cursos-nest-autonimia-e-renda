@@ -15,13 +15,32 @@ import {
   UseInterceptors
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import sharp from 'sharp';
 import { ProdutosService } from './produtos.service';
 import { CreateProdutoDto } from './dto/create-produto.dto';
 import { UpdateProdutoDto } from './dto/update-produto.dto';
+
+const ensureUploadDir = (): string => {
+  const uploadDir = join(process.cwd(), 'uploads', 'produtos');
+  if (!existsSync(uploadDir)) {
+    mkdirSync(uploadDir, { recursive: true });
+  }
+  return uploadDir;
+};
+
+const deleteFileIfExists = (filePath?: string | null): void => {
+  if (!filePath) {
+    return;
+  }
+
+  const absolutePath = join(process.cwd(), filePath.replace(/^\//, ''));
+  if (existsSync(absolutePath)) {
+    unlinkSync(absolutePath);
+  }
+};
 
 @Controller('produtos')
 export class ProdutosController {
@@ -48,6 +67,7 @@ export class ProdutosController {
     return this.produtosService.createOne(createProdutoDto);
   }
 
+  // Fluxo padrão: arquivos até 5MB. Limite pequeno para evitar peso excessivo.
   @Post(':id/imagem')
   @UseInterceptors(
     FileInterceptor('imagem', {
@@ -56,8 +76,7 @@ export class ProdutosController {
       },
       storage: diskStorage({
         destination: (_req, _file, cb) => {
-          const uploadDir = join(process.cwd(), 'uploads', 'produtos');
-          mkdirSync(uploadDir, { recursive: true });
+          const uploadDir = ensureUploadDir();
           cb(null, uploadDir);
         },
         filename: (_req, file, cb) => {
@@ -67,6 +86,7 @@ export class ProdutosController {
         }
       }),
       fileFilter: (_req, file, cb) => {
+        // Aceita somente imagens para evitar upload de arquivos que não são fotos.
         const formatosAceitos = /image\/(jpg|jpeg|png|gif|webp)/;
         if (!formatosAceitos.test(file.mimetype)) {
           cb(new BadRequestException('Formato de imagem inválido'), false);
@@ -89,15 +109,15 @@ export class ProdutosController {
       return;
     }
 
-    const uploadDir = join(process.cwd(), 'uploads', 'produtos');
-    if (!existsSync(uploadDir)) {
-      mkdirSync(uploadDir, { recursive: true });
-    }
+    // Remove a imagem antiga antes de substituir para não deixar arquivos órfãos.
+    deleteFileIfExists(produtoExistente.imagem);
 
+    const uploadDir = ensureUploadDir();
     const nomeArquivo = `${Date.now()}-${Math.random().toString(16).slice(2)}.webp`;
     const caminhoArquivo = join(uploadDir, nomeArquivo);
 
     try {
+      // O Sharp redimensiona e converte para WebP para reduzir o tamanho da imagem.
       await sharp(file.path)
         .resize(800, 800, {
           fit: 'inside',
@@ -113,6 +133,7 @@ export class ProdutosController {
     return this.produtosService.updateOnePartial(id, { imagem: imagemUrl });
   }
 
+  // Fluxo específico para imagens maiores, com limite mais alto e ajuste de qualidade.
   @Post(':id/imagem-grande')
   @UseInterceptors(
     FileInterceptor('imagem', {
@@ -121,8 +142,7 @@ export class ProdutosController {
       },
       storage: diskStorage({
         destination: (_req, _file, cb) => {
-          const uploadDir = join(process.cwd(), 'uploads', 'produtos');
-          mkdirSync(uploadDir, { recursive: true });
+          const uploadDir = ensureUploadDir();
           cb(null, uploadDir);
         },
         filename: (_req, file, cb) => {
@@ -154,11 +174,9 @@ export class ProdutosController {
       return;
     }
 
-    const uploadDir = join(process.cwd(), 'uploads', 'produtos');
-    if (!existsSync(uploadDir)) {
-      mkdirSync(uploadDir, { recursive: true });
-    }
+    deleteFileIfExists(produtoExistente.imagem);
 
+    const uploadDir = ensureUploadDir();
     const nomeArquivo = `${Date.now()}-${Math.random().toString(16).slice(2)}.webp`;
     const caminhoArquivo = join(uploadDir, nomeArquivo);
 
@@ -172,6 +190,19 @@ export class ProdutosController {
 
     const imagemUrl = `/uploads/produtos/${nomeArquivo}`;
     return this.produtosService.updateOnePartial(id, { imagem: imagemUrl });
+  }
+
+  // Remove a imagem do produto e apaga o arquivo físico do disco.
+  @Delete(':id/imagem')
+  @HttpCode(204)
+  removeImagem(@Param('id') id: string): void {
+    const produto = this.produtosService.findOne(id);
+    if (!produto) {
+      return;
+    }
+
+    deleteFileIfExists(produto.imagem);
+    this.produtosService.updateOnePartial(id, { imagem: null });
   }
 
   @Put(':id')

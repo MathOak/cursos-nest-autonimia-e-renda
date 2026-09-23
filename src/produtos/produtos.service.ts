@@ -8,7 +8,7 @@ export type Produto = {
   nome: string;
   categoria: string;
   preco: number;
-  imagem?: string;
+  imagem?: string | null;
 };
 
 @Injectable() // Indica que esta classe é um provedor que pode ser injetado
